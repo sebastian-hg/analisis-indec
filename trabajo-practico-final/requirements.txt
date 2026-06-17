@@ -1,0 +1,13 @@
+# Dependencias del proyecto (instalar con: pip install -r requirements.txt)
+# Análisis y datos
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+pyarrow
+openpyxl
+xlrd
+# Generación del PDF del informe (WeasyPrint requiere además: brew install pango)
+markdown
+weasyprint

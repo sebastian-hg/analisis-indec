@@ -1,0 +1,19 @@
+# Entorno virtual de Python
+.venv/
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Resultados generados pesados/regenerables (se reproducen corriendo el código)
+output/panel.parquet
+output/tablas/
+# Nota: output/graficos/ SÍ se versiona, para que reporte.md se vea en GitHub.
+
+# Bases del INDEC (pesadas; se bajan según el README, sección 2)
+EPH_usu_*.zip
+EPH_Tot_Urbano_3T_*/
+EPH_usu_*_Trim_*_txt/
+
+# Archivos del sistema
+.DS_Store
