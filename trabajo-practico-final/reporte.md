@@ -187,4 +187,20 @@ Aplicado a los 10,507 ocupados sin respuesta, el modelo estima una mediana de in
 
 ---
 
+## 7. Conclusiones
+
+A partir del procesamiento de las bases de la EPH para Gran Rosario y Gran Tucumán entre 2016 y 2025 se desprende lo siguiente:
+
+1. Las tres tasas del mercado laboral siguen una trayectoria similar en ambos aglomerados. La tasa de desocupación alcanza su valor anual más alto en 2020 en Gran Rosario (13,9%) y en 2021 en Gran Tucumán (11,1%), coincidiendo con el contexto de la pandemia, y luego desciende; las tasas de empleo se recuperan hacia el final del período.
+
+2. El ingreso real mediano evoluciona de manera distinta en cada aglomerado: entre 2016 y 2025 varía **+3,0%** en Gran Rosario y **-11,9%** en Gran Tucumán. La diferencia de poder adquisitivo entre ambos se amplía a lo largo del período.
+
+3. El ingreso presenta diferencias estructurales según las características de las personas: aumenta con el nivel educativo y la calificación de la tarea, y es menor para las mujeres, que ganan en promedio 29,6% menos que los varones en Gran Rosario y 32,6% menos en Gran Tucumán.
+
+4. La no respuesta a ingresos es bastante mayor en Gran Rosario (hasta 46,2%) que en Gran Tucumán (hasta 17,1%), lo que respalda el uso de un modelo de imputación.
+
+5. El modelo de regresión explica el 82% de la variabilidad del ingreso y permite cuantificar el efecto de cada variable: nivel educativo superior completo (+139%), tarea profesional (+100%), sexo femenino (-39,5%) y aglomerado de residencia (-26,3%), siempre respecto de su categoría base.
+
+---
+
 *Análisis realizado con Python (pandas, scikit-learn, matplotlib) sobre las bases de microdatos de la EPH del INDEC.*

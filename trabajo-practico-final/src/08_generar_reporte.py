@@ -77,6 +77,15 @@ def main():
     ef_edad = coef(coefs, "CH06")
     G = "output/graficos"
 
+    # Valores para las conclusiones (todo desde los datos)
+    brecha = t("brecha_genero.csv")
+    brecha_prom = {nom: brecha[brecha["AGLO_NOMBRE"] == nom]["BRECHA_%"].mean() for nom in nombres}
+    peak = {}
+    for nom in nombres:
+        sub = tasas_a[tasas_a["AGLOMERADO"] == nom]
+        fila = sub.loc[sub["TASA_DESOCUPACION"].idxmax()]
+        peak[nom] = (int(fila["ANIO"]), fila["TASA_DESOCUPACION"])
+
     # Tablas (promedios anuales, para legibilidad)
     def piv(df, val):
         return df.pivot(index="ANIO", columns="AGLOMERADO", values=val)
@@ -245,6 +254,22 @@ Según el modelo:
 - Edad: **{pct_signo(ef_edad)}** por año, con término cuadrático negativo (relación cóncava).
 
 Aplicado a los {int(modelo['N_IMPUTADO']):,} ocupados sin respuesta, el modelo estima una mediana de ingreso real de **{pesos(modelo['MEDIANA_IMPUTADA_REAL'])}**.
+
+---
+
+## 7. Conclusiones
+
+A partir del procesamiento de las bases de la EPH para {a1} y {a2} entre {anio_ini} y {anio_fin} se desprende lo siguiente:
+
+1. Las tres tasas del mercado laboral siguen una trayectoria similar en ambos aglomerados. La tasa de desocupación alcanza su valor anual más alto en {peak[a1][0]} en {a1} ({pct(peak[a1][1])}) y en {peak[a2][0]} en {a2} ({pct(peak[a2][1])}), coincidiendo con el contexto de la pandemia, y luego desciende; las tasas de empleo se recuperan hacia el final del período.
+
+2. El ingreso real mediano evoluciona de manera distinta en cada aglomerado: entre {anio_ini} y {anio_fin} varía **{pct_signo(var[a1])}** en {a1} y **{pct_signo(var[a2])}** en {a2}. La diferencia de poder adquisitivo entre ambos se amplía a lo largo del período.
+
+3. El ingreso presenta diferencias estructurales según las características de las personas: aumenta con el nivel educativo y la calificación de la tarea, y es menor para las mujeres, que ganan en promedio {pct(abs(brecha_prom[a1]))} menos que los varones en {a1} y {pct(abs(brecha_prom[a2]))} menos en {a2}.
+
+4. La no respuesta a ingresos es bastante mayor en {a1} (hasta {pct(nr_max[a1])}) que en {a2} (hasta {pct(nr_max[a2])}), lo que respalda el uso de un modelo de imputación.
+
+5. El modelo de regresión explica el {pct(modelo['R2']*100,0)} de la variabilidad del ingreso y permite cuantificar el efecto de cada variable: nivel educativo superior completo ({pct_signo(ef_super,0)}), tarea profesional ({pct_signo(ef_prof,0)}), sexo femenino ({pct_signo(ef_mujer)}) y aglomerado de residencia ({pct_signo(ef_aglo2)}), siempre respecto de su categoría base.
 
 ---
 
