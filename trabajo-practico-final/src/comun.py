@@ -22,7 +22,7 @@ AGLOMERADOS = {
 }
 
 # Integrantes del grupo (aparecen en el encabezado del informe). COMPLETAR:
-INTEGRANTES = "_(completar: nombres de los integrantes)_"
+INTEGRANTES = "Tomás Canela, Laura Carelli, Sebastián Hernández, Lautaro"
 
 # ---------------------------------------------------------------------------
 # 2. RUTAS

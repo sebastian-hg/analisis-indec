@@ -2,7 +2,7 @@
 
 **Materia:** Introducción al Análisis de Datos - TUP, UTN
 **Trabajo práctico final (2º parcial)** · Docente: Luis N. Fernández
-**Integrantes:** _(completar: nombres de los integrantes)_
+**Integrantes:** Tomás Canela, Laura Carelli, Sebastián Hernández, Lautaro
 **Fuente:** Encuesta Permanente de Hogares (EPH), INDEC - base individual de aglomerados, todos los trimestres disponibles entre 2016 y 2025.
 
 ---

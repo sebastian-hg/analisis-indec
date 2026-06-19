@@ -22,6 +22,7 @@ PASOS = [
     ("07_modelo.py", "Modelo de imputación de ingresos"),
     ("08_generar_reporte.py", "Generar el informe reporte.md"),
     ("09_exportar_pdf.py", "Exportar reporte.pdf"),
+    ("10_exportar_docx.py", "Exportar reporte.docx (Word)"),
 ]
 
 
