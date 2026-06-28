@@ -28,7 +28,8 @@ trabajo-practico-final/
     07_modelo.py
     08_generar_reporte.py    arma reporte.md a partir de los datos
     09_exportar_pdf.py       convierte reporte.md a reporte.pdf
-  reporte.md / reporte.pdf   informe final (se genera, no se edita a mano)
+    10_exportar_docx.py      convierte reporte.md a reporte.docx (Word)
+  reporte.md / .pdf / .docx  informe final (se genera, no se edita a mano)
   output/                    se genera al correr los scripts
     panel.parquet            base unificada de los dos aglomerados
     tablas/                  resultados en .csv
@@ -62,10 +63,12 @@ source .venv/bin/activate         # en Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Para generar el PDF, en Mac hace falta además instalar las librerías de WeasyPrint:
+Para generar el PDF, en Mac hace falta además instalar las librerías de WeasyPrint;
+y para el Word (`.docx`), pandoc:
 
 ```bash
 brew install pango gdk-pixbuf libffi
+brew install pandoc
 ```
 
 ## 4. Cómo correr el análisis
@@ -90,6 +93,7 @@ python src/06_graficos.py            # gráficos (necesita 02 a 05)
 python src/07_modelo.py              # modelo de imputación de ingresos
 python src/08_generar_reporte.py     # arma reporte.md
 python src/09_exportar_pdf.py        # convierte reporte.md a reporte.pdf
+python src/10_exportar_docx.py       # convierte reporte.md a reporte.docx (Word)
 ```
 
 Dependencias entre scripts:
@@ -113,6 +117,7 @@ Dependencias entre scripts:
 | `07_modelo.py` | 4 | Regresión sobre log(ingreso) para imputar la no respuesta; R², RMSE y coeficientes. |
 | `08_generar_reporte.py` | - | Arma el `reporte.md` con los números, tablas y gráficos. |
 | `09_exportar_pdf.py` | - | Convierte el `reporte.md` en `reporte.pdf`. |
+| `10_exportar_docx.py` | - | Convierte el `reporte.md` en `reporte.docx` (Word), con pandoc. |
 
 ## 6. Decisiones metodológicas
 

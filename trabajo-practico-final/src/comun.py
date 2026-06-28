@@ -22,7 +22,7 @@ AGLOMERADOS = {
 }
 
 # Integrantes del grupo (aparecen en el encabezado del informe). COMPLETAR:
-INTEGRANTES = "_(completar: nombres de los integrantes)_"
+INTEGRANTES = "Tomás Salvador Canela, Laura Carelli, Lautaro Dellagiovanna, Sebastián Hernández García."
 
 # ---------------------------------------------------------------------------
 # 2. RUTAS
@@ -33,6 +33,9 @@ OUTPUT = os.path.join(RAIZ, "output")
 TABLAS = os.path.join(OUTPUT, "tablas")
 GRAFICOS = os.path.join(OUTPUT, "graficos")
 PANEL_PARQUET = os.path.join(OUTPUT, "panel.parquet")
+
+# Carpeta donde viven los archivos de base de datos de la EPH (los zip de microdatos).
+CARPETA_DATOS_EPH = os.path.join(RAIZ, "input", "EPH")
 
 for carpeta in (OUTPUT, TABLAS, GRAFICOS):
     os.makedirs(carpeta, exist_ok=True)
@@ -78,6 +81,19 @@ NIVEL_ED = {
     7: "Sin instrucción",
 }
 
+# Orden educativo REAL del nivel educativo (de menor a mayor). Los codigos de la
+# base no siguen ese orden: el 7 ("Sin instruccion") es en realidad el nivel mas
+# bajo. Por eso, para cualquier medida que use el orden (como Spearman), primero
+# hay que reordenar segun la jerarquia educativa y no segun el numero del codigo.
+NIVEL_ED_ORDEN = {7: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
+
+# Parseo del nivel educativo (ordinal) a una variable CUANTITATIVA: los anios de
+# educacion aproximados de cada nivel. Al tener distancias reales (anios), ya se
+# puede tratar como cuantitativa (correlacion de Pearson, predictor numerico). El
+# codigo 7 ("Sin instruccion") es el nivel mas bajo, por eso recibe el valor mas
+# chico (0 anios), por debajo del codigo 1 ("Primario incompleto" = 3 anios).
+ANIOS_EDUCACION = {7: 0, 1: 3, 2: 7, 3: 9, 4: 12, 5: 14, 6: 17}
+
 # No respuesta a ingresos: en la EPH los montos usan -9 (ver Anexo I del diseño).
 NO_RESPUESTA_INGRESO = -9
 
@@ -115,14 +131,19 @@ def factor_real(anio, trimestre):
     return IPC_BASE / IPC_TRIMESTRE[(int(anio), int(trimestre))]
 
 
-def agregar_columnas_tiempo(df):
+def agregar_columnas_tiempo(panel):
     """Agrega columnas de tiempo y deflación al panel: PERIODO (texto, p.ej.
     '2024-T3'), PERIODO_NUM (numérico para ordenar/graficar) y FACTOR_REAL."""
-    df = df.copy()
-    df["PERIODO"] = df["ANIO"].astype(int).astype(str) + "-T" + df["TRIMESTRE"].astype(int).astype(str)
-    df["PERIODO_NUM"] = df["ANIO"] + (df["TRIMESTRE"] - 1) / 4
-    df["FACTOR_REAL"] = [factor_real(a, t) for a, t in zip(df["ANIO"], df["TRIMESTRE"])]
-    return df
+    panel = panel.copy()
+    # PERIODO es un texto legible (anio y trimestre pegados, p.ej. "2024-T3").
+    panel["PERIODO"] = panel["ANIO"].astype(int).astype(str) + "-T" + panel["TRIMESTRE"].astype(int).astype(str)
+    # PERIODO_NUM es el mismo periodo pero como numero continuo, para poder ordenar
+    # y graficar en el eje del tiempo (cada trimestre suma 0.25 al anio).
+    panel["PERIODO_NUM"] = panel["ANIO"] + (panel["TRIMESTRE"] - 1) / 4
+    # FACTOR_REAL es el multiplicador que lleva cada monto a precios del periodo base.
+    panel["FACTOR_REAL"] = [factor_real(anio, trimestre)
+                            for anio, trimestre in zip(panel["ANIO"], panel["TRIMESTRE"])]
+    return panel
 
 
 # Calificación de la tarea = ÚLTIMO dígito de PP04D_COD (clasificador CNO del INDEC).
@@ -138,8 +159,17 @@ def calificacion_tarea(pp04d_cod):
     """Calificación ocupacional: último dígito de PP04D_COD."""
     if pd.isna(pp04d_cod) or pp04d_cod <= 0:
         return "Sin dato"
-    ultimo = int(str(int(pp04d_cod)).zfill(5)[-1])
-    return CALIFICACION.get(ultimo, "Otra/Ns")
+    # Completamos el codigo a 5 digitos con ceros adelante y tomamos el ultimo,
+    # que es el que indica la calificacion de la tarea en el clasificador CNO.
+    ultimo_digito = int(str(int(pp04d_cod)).zfill(5)[-1])
+    return CALIFICACION.get(ultimo_digito, "Otra/Ns")
+
+
+# Parseo de la calificacion de la tarea (ordinal) a un puntaje CUANTITATIVO, de
+# menor a mayor calificacion. Las categorias sin orden ("Otra/Ns", "Sin dato")
+# no aparecen aca a proposito: no se pueden ubicar en la escala, asi que quedan
+# como dato faltante (y despues se descartan del modelo).
+CALIFICACION_ORDEN = {"No calificada": 1, "Operativa": 2, "Técnica": 3, "Profesional": 4}
 
 
 def sector_actividad(pp04b_cod):
@@ -147,34 +177,49 @@ def sector_actividad(pp04b_cod):
     del INDEC, a partir de los 2 primeros dígitos de PP04B_COD)."""
     if pd.isna(pp04b_cod) or pp04b_cod <= 0:
         return "Sin dato"
-    d2 = int(str(int(pp04b_cod)).zfill(4)[:2])
-    if d2 in range(1, 10):
+    # Completamos el codigo a 4 digitos con ceros adelante y tomamos los dos
+    # primeros, que identifican la division de actividad (gran sector economico).
+    division_actividad = int(str(int(pp04b_cod)).zfill(4)[:2])
+    if division_actividad in range(1, 10):
         return "Agro, pesca y minería"
-    if d2 in range(10, 35):
+    if division_actividad in range(10, 35):
         return "Industria manufacturera"
-    if d2 in range(35, 41):
+    if division_actividad in range(35, 41):
         return "Electricidad, gas y agua"
-    if d2 in range(41, 45):
+    if division_actividad in range(41, 45):
         return "Construcción"
-    if d2 in range(45, 49):
+    if division_actividad in range(45, 49):
         return "Comercio"
-    if d2 in range(49, 55):
+    if division_actividad in range(49, 55):
         return "Transporte y comunicaciones"
-    if d2 in range(55, 57):
+    if division_actividad in range(55, 57):
         return "Hotelería y gastronomía"
-    if d2 in range(58, 84):
+    if division_actividad in range(58, 84):
         return "Servicios financieros y profesionales"
-    if d2 == 84:
+    if division_actividad == 84:
         return "Administración pública"
-    if d2 == 85:
+    if division_actividad == 85:
         return "Enseñanza"
-    if d2 in range(86, 89):
+    if division_actividad in range(86, 89):
         return "Salud y servicios sociales"
-    if d2 == 97:
+    if division_actividad == 97:
         return "Servicio doméstico"
-    if d2 in range(90, 97):
+    if division_actividad in range(90, 97):
         return "Otros servicios"
     return "Otros / No especificado"
+
+
+def nivel_agrupado(nivel_ed):
+    """Nivel educativo agrupado en pocas categorías (para el gráfico de mosaicos)."""
+    if nivel_ed in (1, 2):
+        return "Primario"
+    if nivel_ed in (3, 4):
+        return "Secundario"
+    if nivel_ed in (5, 6):
+        return "Superior"
+    if nivel_ed == 7:
+        return "Sin instrucción"
+    return "Sin dato"
 
 
 def rango_etario(edad):
@@ -205,11 +250,12 @@ _PATRON_ZIP = re.compile(r"usu_(\d)(?:er|do|to)?_?Trim_?(\d{4})", re.IGNORECASE)
 
 def zips_disponibles():
     """Lista de (anio, trimestre, ruta) de todos los zip de EPH individual
-    presentes en la carpeta, ordenada cronológicamente."""
-    encontrados = []
-    for ruta in glob.glob(os.path.join(RAIZ, "EPH_usu_*.zip")):
-        m = _PATRON_ZIP.search(os.path.basename(ruta))
-        if m:
-            trim, anio = int(m.group(1)), int(m.group(2))
-            encontrados.append((anio, trim, ruta))
-    return sorted(encontrados)
+    presentes en input/EPH, ordenada cronológicamente."""
+    zips_encontrados = []
+    for ruta_zip in glob.glob(os.path.join(CARPETA_DATOS_EPH, "EPH_usu_*.zip")):
+        # Buscamos en el nombre del archivo el digito del trimestre y el anio.
+        coincidencia = _PATRON_ZIP.search(os.path.basename(ruta_zip))
+        if coincidencia:
+            trimestre, anio = int(coincidencia.group(1)), int(coincidencia.group(2))
+            zips_encontrados.append((anio, trimestre, ruta_zip))
+    return sorted(zips_encontrados)
