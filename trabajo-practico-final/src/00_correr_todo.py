@@ -27,17 +27,23 @@ PASOS = [
 
 
 def main():
-    src = os.path.dirname(os.path.abspath(__file__))
+    # Carpeta donde viven los scripts (la misma en la que esta este archivo).
+    carpeta_scripts = os.path.dirname(os.path.abspath(__file__))
     print("=" * 60)
     print(" CORRIENDO EL PROYECTO COMPLETO ".center(60, "="))
     print("=" * 60)
 
-    for i, (script, desc) in enumerate(PASOS, 1):
-        print(f"\n[{i}/{len(PASOS)}] {desc}  ({script})")
+    # Recorremos los pasos en orden. enumerate(..., 1) numera desde 1 para mostrar
+    # el progreso "[paso actual / total]" en pantalla.
+    for numero_paso, (nombre_script, descripcion) in enumerate(PASOS, 1):
+        print(f"\n[{numero_paso}/{len(PASOS)}] {descripcion}  ({nombre_script})")
         print("-" * 60)
-        r = subprocess.run([sys.executable, os.path.join(src, script)])
-        if r.returncode != 0:
-            print(f"\nError: falló {script}. Se detiene la ejecución.")
+        # Corremos cada script como un proceso aparte, con el mismo Python que ejecuta
+        # este archivo (sys.executable).
+        resultado = subprocess.run([sys.executable, os.path.join(carpeta_scripts, nombre_script)])
+        # Si un script falla (codigo de salida distinto de 0), cortamos toda la cadena.
+        if resultado.returncode != 0:
+            print(f"\nError: falló {nombre_script}. Se detiene la ejecución.")
             sys.exit(1)
 
     print("\n" + "=" * 60)
